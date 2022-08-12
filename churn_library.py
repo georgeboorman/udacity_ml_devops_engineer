@@ -14,16 +14,27 @@ Date: August 2022
 '''
 
 # import libraries
-import os
+import shap
+import joblib
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns; sns.set()
+from sklearn.preprocessing import normalize
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import plot_roc_curve, classification_report
 import logging
+import os
 os.environ['QT_QPA_PLATFORM']='offscreen'
 
-# Set up logging for all functions
-logging.basicConfig(
-    filename='./results.log',
-    level=logging.INFO,
-    filemode='w',
-    format='%{name}s - %{levelname}s - %{message}s')
+path_df = "data/bank_data.csv"
+image_path = "images/eda"
+results_path = "images/results"
+logs_path = "logs"
+models_path = "models"
 
 def import_data(pth):
     '''
@@ -35,16 +46,14 @@ def import_data(pth):
             df: pandas DataFrame
     '''	
     import pandas as pd
-	try:
-        # Read in data without extra column
-        df = pd.read_csv(pth, index_col=["Unnamed: 0"])
-        assert df.isinstance(pd.DataFrame)
-        logging.info("Successfully read in file as pandas DataFrame")
-    except ValueError:
-        logging.error("The function requires a path to a csv file")
+    df = pd.read_csv(path_df, index_col=["Unnamed: 0"])
+    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+    return df.head(), "/n", df.shape, \
+        "\n", df.isnull().sum(), "\n", \
+                df.describe()
 
 
-def perform_eda(df):
+def perform_eda(df, results_path):
     '''
     perform eda on df and save figures to images folder
     input:
@@ -53,8 +62,20 @@ def perform_eda(df):
     output:
             None
     '''
-	pass
-
+    plt.figure(figsize=(20,10))
+    df['Churn'].hist()
+    plt.savefig(f'{results_path}/churn_histogram.png')
+    df['Customer_Age'].hist()
+    plt.savefig(f'{results_path}/customer_age_histogram.png')
+    df['Marital_Status'].value_counts('normalize').plot(kind='bar')
+    plt.savefig(f'{results_path}/marital_status_bar_plot.png')
+    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
+    plt.savefig(f'{results_path}/Total_Trans_Ct_kde_plot.png')
+    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
+    plt.savefig(f'{results_path}/Total_Trans_Ct_kde_plot.png')
+    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
+    plt.show()
+    plt.savefig(f'{results_path}/correlation_heatmap.png')
 
 def encoder_helper(df, category_lst, response):
     '''
@@ -69,8 +90,13 @@ def encoder_helper(df, category_lst, response):
     output:
             df: pandas dataframe with new columns for
     '''
-    pass
-
+    try:
+        cat_columns = df.select_dtypes(exclude=["int64", "float64"]).columns.tolist()
+        logging.info("Categories: {}".format(cat_columns)
+        quant_columns = df.columns.symmetric_difference(cat_cols)
+        logging.info("Quant columns: {}".format(quant_columns))
+        return "Categories: {}".format(cat_columns), \
+                "\n", "Quant columns: {}".format(quant_columns)
 
 def perform_feature_engineering(df, response):
     '''
@@ -133,8 +159,3 @@ def train_models(X_train, X_test, y_train, y_test):
               None
     '''
     pass
-
-if __name__ == "__main__":
-    import_data("/data/bank_data.csv")
-    import_data([1,2,3])
-    import_data("README.md")
