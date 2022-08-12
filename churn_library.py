@@ -47,10 +47,9 @@ def import_data(pth):
     '''	
     import pandas as pd
     df = pd.read_csv(path_df, index_col=["Unnamed: 0"])
-    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
-    return df.head(), "/n", df.shape, \
-        "\n", df.isnull().sum(), "\n", \
-                df.describe()
+    df['Churn'] = df['Attrition_Flag'].apply(
+        lambda val: 0 if val == "Existing Customer" else 1)
+    return df
 
 
 def perform_eda(df, results_path):
@@ -62,6 +61,7 @@ def perform_eda(df, results_path):
     output:
             None
     '''
+    import_data(path_df)
     plt.figure(figsize=(20,10))
     df['Churn'].hist()
     plt.savefig(f'{results_path}/churn_histogram.png')
@@ -90,13 +90,19 @@ def encoder_helper(df, category_lst, response):
     output:
             df: pandas dataframe with new columns for
     '''
-    try:
-        cat_columns = df.select_dtypes(exclude=["int64", "float64"]).columns.tolist()
-        logging.info("Categories: {}".format(cat_columns)
-        quant_columns = df.columns.symmetric_difference(cat_cols)
-        logging.info("Quant columns: {}".format(quant_columns))
-        return "Categories: {}".format(cat_columns), \
-                "\n", "Quant columns: {}".format(quant_columns)
+    for col in df.select_dtypes("object").columns:
+        col_mean_churn = df.groupby(col).mean()['Churn']
+        df[f'{col}_Churn'] = df[col].map(col_mean_churn)
+    return df
+
+
+#     try:
+#         cat_columns = df.select_dtypes(exclude=["int64", "float64"]).columns.tolist()
+#         logging.info("Categories: {}".format(cat_columns)
+#         quant_columns = df.columns.symmetric_difference(cat_cols)
+#         logging.info("Quant columns: {}".format(quant_columns))
+#         return "Categories: {}".format(cat_columns), \
+#                 "\n", "Quant columns: {}".format(quant_columns)
 
 def perform_feature_engineering(df, response):
     '''
@@ -110,6 +116,17 @@ def perform_feature_engineering(df, response):
               y_train: y training data
               y_test: y testing data
     '''
+    X = pd.DataFrame()
+    keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
+        'Total_Relationship_Count', 'Months_Inactive_12_mon',
+        'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
+        'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
+        'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
+        'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
+        'Income_Category_Churn', 'Card_Category_Churn']
+    X[keep_cols] = df[keep_cols]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
 
 def classification_report_image(y_train,
                                 y_test,
@@ -131,7 +148,7 @@ def classification_report_image(y_train,
     output:
              None
     '''
-    pass
+    
 
 
 def feature_importance_plot(model, X_data, output_pth):
