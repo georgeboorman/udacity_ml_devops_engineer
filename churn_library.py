@@ -127,6 +127,7 @@ def perform_feature_engineering(df, response):
     X[keep_cols] = df[keep_cols]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
+    return X_train, X_test, y_train, y_test
 
 def classification_report_image(y_train,
                                 y_test,
@@ -148,7 +149,8 @@ def classification_report_image(y_train,
     output:
              None
     '''
-    
+
+        
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -175,4 +177,27 @@ def train_models(X_train, X_test, y_train, y_test):
     output:
               None
     '''
-    pass
+    # Random forest
+    rfc = RandomForestClassifier(random_state=42)
+    param_grid = {
+        'n_estimators': [200, 500],
+        'max_features': ['auto', 'sqrt'],
+        'max_depth' : [4,5,100],
+        'criterion' :['gini', 'entropy']
+        }
+    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    cv_rfc.fit(X_train, y_train)
+    y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
+    y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
+    rf_test_report = classification_report(y_test, y_test_preds_rf)
+    rf_train_report = classification_report(y_train, y_train_preds_rf)
+
+    # Logistic regression
+    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+    lrc.fit(X_train, y_train)
+    y_train_preds_lr = lrc.predict(X_train)
+    y_test_preds_lr = lrc.predict(X_test)
+    lr_test_report = classification_report(y_test, y_test_preds_lr)
+    lr_train_report = classification_report(y_train, y_train_preds_lr)
+
+    return rf_test_report, rf_train_report, lr_test_report, lr_train_report
