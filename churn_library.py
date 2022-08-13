@@ -26,7 +26,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import plot_roc_curve, classification_report
-import logging
 import os
 os.environ['QT_QPA_PLATFORM']='offscreen'
 
@@ -35,6 +34,7 @@ image_path = "images/eda"
 results_path = "images/results"
 logs_path = "logs"
 models_path = "models"
+categories = df.select_dtypes("object").columns
 
 def import_data(pth):
     '''
@@ -77,7 +77,7 @@ def perform_eda(df, results_path):
     plt.show()
     plt.savefig(f'{results_path}/correlation_heatmap.png')
 
-def encoder_helper(df, category_lst, response):
+def encoder_helper(df, category_lst, response=None):
     '''
     helper function to turn each categorical column into a new column with
     propotion of churn for each category - associated with cell 15 from the notebook
@@ -90,7 +90,9 @@ def encoder_helper(df, category_lst, response):
     output:
             df: pandas dataframe with new columns for
     '''
-    for col in df.select_dtypes("object").columns:
+    # category_lst = df.select_dtypes("object").columns
+    import_data(path_df)
+    for col in category_lst:
         col_mean_churn = df.groupby(col).mean()['Churn']
         df[f'{col}_Churn'] = df[col].map(col_mean_churn)
     return df
@@ -104,7 +106,7 @@ def encoder_helper(df, category_lst, response):
 #         return "Categories: {}".format(cat_columns), \
 #                 "\n", "Quant columns: {}".format(quant_columns)
 
-def perform_feature_engineering(df, response):
+def perform_feature_engineering(df, response=None):
     '''
     input:
               df: pandas dataframe
@@ -116,6 +118,10 @@ def perform_feature_engineering(df, response):
               y_train: y training data
               y_test: y testing data
     '''
+    import_data(path_df)
+    encoder_helper(path_df, categories)
+
+    # Create features DataFrame
     X = pd.DataFrame()
     keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
         'Total_Relationship_Count', 'Months_Inactive_12_mon',
@@ -126,7 +132,10 @@ def perform_feature_engineering(df, response):
         'Income_Category_Churn', 'Card_Category_Churn']
     X[keep_cols] = df[keep_cols]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size= 0.3, random_state=42)
+    
     return X_train, X_test, y_train, y_test
 
 def classification_report_image(y_train,
@@ -149,8 +158,28 @@ def classification_report_image(y_train,
     output:
              None
     '''
+    import_data(path_df)
+    perform_feature_engineering(df, categories)
+    train_models(X_train, X_test, y_train, y_test)
 
-        
+    # Logistic regression test and train classification reports
+    lr_test_report = classification_report(y_test, y_test_preds_lr)
+    lr_train_report = classification_report(y_train, y_train_preds_lr)
+
+    # Random forest test and train classification reports
+    rf_test_report = classification_report(y_test, y_test_preds_rf)
+    rf_train_report = classification_report(y_train, y_train_preds_rf)
+
+    # ROC Curve for models
+    lrc_plot = plot_roc_curve(lrc, X_test, y_test)
+    plt.figure(figsize=(15, 8))
+    ax = plt.gca()
+    rfc_disp = plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8)
+    lrc_plot.plot(ax=ax, alpha=0.8)
+    plt.savefig(f'{image_path}')
+
+    return rf_test_report, rf_train_report, lr_test_report, lr_train_report, \
+        rfc_disp
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -164,7 +193,10 @@ def feature_importance_plot(model, X_data, output_pth):
     output:
              None
     '''
-    pass
+    
+    explainer = shap.TreeExplainer(cv_rfc.best_estimator_)
+    shap_values = explainer.shap_values(X_test)
+    shap.summary_plot(shap_values, X_test, plot_type="bar")
 
 def train_models(X_train, X_test, y_train, y_test):
     '''
@@ -189,15 +221,12 @@ def train_models(X_train, X_test, y_train, y_test):
     cv_rfc.fit(X_train, y_train)
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
-    rf_test_report = classification_report(y_test, y_test_preds_rf)
-    rf_train_report = classification_report(y_train, y_train_preds_rf)
 
     # Logistic regression
     lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
     lrc.fit(X_train, y_train)
     y_train_preds_lr = lrc.predict(X_train)
     y_test_preds_lr = lrc.predict(X_test)
-    lr_test_report = classification_report(y_test, y_test_preds_lr)
-    lr_train_report = classification_report(y_train, y_train_preds_lr)
 
-    return rf_test_report, rf_train_report, lr_test_report, lr_train_report
+    return cv_rfc, y_train_preds_rf, y_test_preds_rf, \
+        y_train_preds_lr, y_test_preds_lr
