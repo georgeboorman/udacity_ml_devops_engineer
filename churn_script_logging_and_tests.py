@@ -31,32 +31,36 @@ def test_eda(perform_eda):
 	'''
 	test perform eda function
 	'''
+	from churn_library import import_data, perform_eda
+	df = import_data("data/bank_data.csv")
+	perform_eda(df)
+	image_path = "images/eda/"
+	files = ["churn_histogram.png", "correlation_heatmap.png",
+	"customer_age_histogram.png", "marital_status_bar_plot.png", 
+	"Total_Trans_Ct_kde_plot.png"]
+	actual_files = set(os.listdir(image_path))
 	try:
-        assert isinstance(df, pd.DataFrame)
-        logging.info("Successfully previewed DataFrame")
-        logging.info("{} has {} rows and {} columns".format(df.shape[0], df.shape[1]))
-        logging.info("{}".format(df.isnull().sum()))
-        logging.info("{}".format(df.describe()))
-        return df.head(), "\n", df.shape, \
-                "\n", df.isnull().sum(), \
-                "\n", df.describe()
-    except AttributeError:
-        logging.error("{} must be a pandas DataFrame to perform EDA.".format(df))
-        return "{} must be a pandas DataFrame to use the perform_eda function.".format(df)
-
+		assert actual_files.issuperset(set(files))
+		logging.info(f'Files were successfully saved in {image_path}')
+	except AssertionError:
+		logging.error(f'Not all files were successfully saved in {image_path}')
+	try:
+		assert [os.stat(str(image_path + file)).st_size > 0 for file in files]
+	except FileNotFoundError:
+		logging.error("One or more of the files are empty")
 
 def test_encoder_helper(encoder_helper):
 	'''
 	test encoder helper
 	'''
+	from churn_library import import_data
+	df = import_data(df)
 	try:
-        cat_columns = df.select_dtypes(exclude=["int64", "float64"]).columns.tolist()
-        logging.info("Categories: {}".format(cat_columns)
+		cat_columns = df.select_dtypes(exclude=["int64", "float64"]).columns.tolist()
+		logging.info("Categories: {}".format(cat_columns)
         quant_columns = df.columns.symmetric_difference(cat_cols)
         logging.info("Quant columns: {}".format(quant_columns))
-        return "Categories: {}".format(cat_columns), \
-                "\n", "Quant columns: {}".format(quant_columns)
-	else:
+	except:
 		
 
 
