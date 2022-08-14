@@ -30,11 +30,12 @@ import os
 os.environ['QT_QPA_PLATFORM']='offscreen'
 
 path_df = "data/bank_data.csv"
-image_path = "images/eda"
-results_path = "images/results"
-logs_path = "logs"
-models_path = "models"
-cat_columns = [
+image_path = "images/eda/"
+results_path = "images/results/"
+logs_path = "logs/"
+models_path = "models/"
+category_lst = [
+    'Attrition_Flag',
     'Gender',
     'Education_Level',
     'Marital_Status',
@@ -67,17 +68,17 @@ def perform_eda(df, image_path):
     '''
     plt.figure(figsize=(20,10))
     df['Churn'].hist()
-    plt.savefig(f'{image_path}/churn_histogram.png')
+    plt.savefig(f'{image_path}churn_histogram.png')
     df['Customer_Age'].hist()
-    plt.savefig(f'{image_path}/customer_age_histogram.png')
+    plt.savefig(f'{image_path}customer_age_histogram.png')
     df['Marital_Status'].value_counts('normalize').plot(kind='bar')
-    plt.savefig(f'{image_path}/marital_status_bar_plot.png')
+    plt.savefig(f'{image_path}marital_status_bar_plot.png')
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
     plt.savefig(f'{image_path}/Total_Trans_Ct_kde_plot.png')
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
-    plt.savefig(f'{image_path}/Total_Trans_Ct_kde_plot.png')
+    plt.savefig(f'{image_path}Total_Trans_Ct_kde_plot.png')
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
-    plt.savefig(f'{image_path}/correlation_heatmap.png')
+    plt.savefig(f'{image_path}correlation_heatmap.png')
 
 def encoder_helper(df, category_lst, response="_Churn"):
     '''
@@ -174,8 +175,8 @@ def train_models(X_train, X_test, y_train, y_test, models_path, results_path):
     y_test_preds_lr = lrc.predict(X_test)
 
     # Save models
-    joblib.dump(cv_rfc.best_estimator_, f'./{models_path}/rfc_model.pkl')
-    joblib.dump(lrc, f'./{models_path}/logistic_model.pkl')
+    joblib.dump(cv_rfc.best_estimator_, f'./{models_path}rfc_model.pkl')
+    joblib.dump(lrc, f'./{models_path}logistic_model.pkl')
 
     # ROC Curve for models
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
@@ -183,7 +184,7 @@ def train_models(X_train, X_test, y_train, y_test, models_path, results_path):
     ax = plt.gca()
     rfc_disp = plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
-    plt.savefig(f'{results_path}/roc_curve.png')
+    plt.savefig(f'{results_path}roc_curve.png')
 
     return cv_rfc, lrc, y_train_preds_rf, y_test_preds_rf, \
         y_train_preds_lr, y_test_preds_lr
@@ -222,7 +223,7 @@ def classification_report_image(y_train,
     plt.axis('off')
 
     # Save rfc_classification_plot
-    plt.savefig(f'{results_path}/rfc_classification_report.png')
+    plt.savefig(f'{results_path}rfc_classification_report.png')
 
     # LRC test and train classification report
     lr_test_report = classification_report(y_test, y_test_preds_lr)
@@ -235,7 +236,7 @@ def classification_report_image(y_train,
     plt.axis('off')
 
     # Save lrc_classification_plot
-    plt.savefig(f'{results_path}/lrc_classification_report.png')
+    plt.savefig(f'{results_path}lrc_classification_report.png')
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -256,7 +257,7 @@ def feature_importance_plot(model, X_data, output_pth):
     shap.summary_plot(shap_values, X_data, plot_type="bar", show=False)
 
     # Save rfc_shap_summary_plot
-    plt.savefig(f'{results_path}/rfc_shap_summary_plot.png')
+    plt.savefig(f'{results_path}rfc_shap_summary_plot.png')
 
     # Calculate feature importances
     importances = model.best_estimator_.feature_importances_
@@ -280,14 +281,14 @@ def feature_importance_plot(model, X_data, output_pth):
     plt.xticks(range(X_data.shape[1]), names, rotation=90)
 
     # Save rfc_feature_importance plot
-    plt.savefig(f'{results_path}/rfc_feature_importance.png')
+    plt.savefig(f'{results_path}rfc_feature_importance.png')
 
 if __name__ == "__main__":
     path_df = "data/bank_data.csv"
-    image_path = "images/eda"
-    results_path = "images/results"
-    logs_path = "logs"
-    models_path = "models"
+    image_path = "images/eda/"
+    results_path = "images/results/"
+    logs_path = "logs/"
+    models_path = "models/"
     category_lst = [
         'Gender',
         'Education_Level',

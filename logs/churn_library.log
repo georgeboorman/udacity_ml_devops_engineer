@@ -1,0 +1,9 @@
+root - INFO - SUCCESS: Testing import_data
+root - INFO - SUCCESS: DataFrame is not empty
+root - INFO - SUCCESS: Files were successfully saved in images/eda/
+root - INFO - SUCCESS: The images are not empty
+root - INFO - SUCCESS: New columns successfully created
+root - INFO - SUCCESS: Categorical values have been encoded for churn proportion
+root - INFO - SUCCESS: Data has been split into training and test sets
+root - INFO - SUCCESS: Models have been trained and saved in models/
+root - INFO - SUCCESS: ROC Curve plot saved in images/results/
