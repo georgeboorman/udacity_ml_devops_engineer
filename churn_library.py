@@ -14,34 +14,35 @@ Date: August 2022
 '''
 
 # import libraries
+import os
+from sklearn.metrics import plot_roc_curve, classification_report
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 import shap
 import joblib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns; sns.set()
-from sklearn.preprocessing import normalize
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import plot_roc_curve, classification_report
-import os
-os.environ['QT_QPA_PLATFORM']='offscreen'
+import seaborn as sns
+sns.set()
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
-path_df = "data/bank_data.csv"
-image_path = "images/eda/"
-results_path = "images/results/"
-logs_path = "logs/"
-models_path = "models/"
+PATH_DF = "data/bank_data.csv"
+IMAGE_PATH = "images/eda/"
+RESULTS_PATH = "images/results/"
+LOGS_PATH = "logs/"
+MODELS_PATH = "models/"
 category_lst = [
     'Attrition_Flag',
     'Gender',
     'Education_Level',
     'Marital_Status',
     'Income_Category',
-    'Card_Category'                
+    'Card_Category'
 ]
+
 
 def import_data(pth):
     '''
@@ -51,13 +52,14 @@ def import_data(pth):
             pth: a path to the csv
     output:
             df: pandas DataFrame
-    '''	
-    df = pd.read_csv(path_df, index_col=["Unnamed: 0"])
+    '''
+    df = pd.read_csv(PATH_DF, index_col=["Unnamed: 0"])
     df['Churn'] = df['Attrition_Flag'].apply(
         lambda val: 0 if val == "Existing Customer" else 1)
     return df
 
-def perform_eda(df, image_path):
+
+def perform_eda(df, IMAGE_PATH):
     '''
     perform eda on df and save figures to images folder
     input:
@@ -66,19 +68,27 @@ def perform_eda(df, image_path):
     output:
             None
     '''
-    plt.figure(figsize=(20,10))
+    # Churn histogram
+    plt.figure(figsize=(20, 10))
     df['Churn'].hist()
-    plt.savefig(f'{image_path}churn_histogram.png')
+    plt.savefig(f'{IMAGE_PATH}churn_histogram.png')
+
+    # Customer age histogram
     df['Customer_Age'].hist()
-    plt.savefig(f'{image_path}customer_age_histogram.png')
+    plt.savefig(f'{IMAGE_PATH}customer_age_histogram.png')
+
+    # Marital status histogram
     df['Marital_Status'].value_counts('normalize').plot(kind='bar')
-    plt.savefig(f'{image_path}marital_status_bar_plot.png')
+    plt.savefig(f'{IMAGE_PATH}marital_status_bar_plot.png')
+
+    # Total Trans Ct histogram and kde plot
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
-    plt.savefig(f'{image_path}/Total_Trans_Ct_kde_plot.png')
-    sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
-    plt.savefig(f'{image_path}Total_Trans_Ct_kde_plot.png')
-    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
-    plt.savefig(f'{image_path}correlation_heatmap.png')
+    plt.savefig(f'{IMAGE_PATH}/Total_Trans_Ct_kde_plot.png')
+
+    # Correlation heatmap
+    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
+    plt.savefig(f'{IMAGE_PATH}correlation_heatmap.png')
+
 
 def encoder_helper(df, category_lst, response="_Churn"):
     '''
@@ -88,31 +98,25 @@ def encoder_helper(df, category_lst, response="_Churn"):
     input:
             df: pandas dataframe
             category_lst: list of columns that contain categorical features
-            response: string of response name [optional argument that could be used for naming variables or index y column]
+            response: string of response name
+                [optional argument for naming variables or index y column]
 
     output:
             df: pandas dataframe with new columns for
     '''
-    # category_lst = df.select_dtypes("object").columns
+    # Mapping mean churn by category
     for col in category_lst:
         col_mean_churn = df.groupby(col).mean()['Churn']
         df[f'{col}{response}'] = df[col].map(col_mean_churn)
     return df
 
 
-#     try:
-#         cat_columns = df.select_dtypes(exclude=["int64", "float64"]).columns.tolist()
-#         logging.info("Categories: {}".format(cat_columns)
-#         quant_columns = df.columns.symmetric_difference(cat_cols)
-#         logging.info("Quant columns: {}".format(quant_columns))
-#         return "Categories: {}".format(cat_columns), \
-#                 "\n", "Quant columns: {}".format(quant_columns)
-
 def perform_feature_engineering(df, response=None):
     '''
     input:
               df: pandas dataframe
-              response: string of response name [optional argument that could be used for naming variables or index y column]
+              response: string of response name
+                [optional argument for naming variables or index y column]
 
     output:
               X_train: X training data
@@ -124,22 +128,36 @@ def perform_feature_engineering(df, response=None):
     # Create features DataFrame
     X = pd.DataFrame()
     y = df['Churn']
-    keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
-        'Total_Relationship_Count', 'Months_Inactive_12_mon',
-        'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
-        'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
-        'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
-        'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
-        'Income_Category_Churn', 'Card_Category_Churn']
+    keep_cols = [
+        'Customer_Age',
+        'Dependent_count',
+        'Months_on_book',
+        'Total_Relationship_Count',
+        'Months_Inactive_12_mon',
+        'Contacts_Count_12_mon',
+        'Credit_Limit',
+        'Total_Revolving_Bal',
+        'Avg_Open_To_Buy',
+        'Total_Amt_Chng_Q4_Q1',
+        'Total_Trans_Amt',
+        'Total_Trans_Ct',
+        'Total_Ct_Chng_Q4_Q1',
+        'Avg_Utilization_Ratio',
+        'Gender_Churn',
+        'Education_Level_Churn',
+        'Marital_Status_Churn',
+        'Income_Category_Churn',
+        'Card_Category_Churn']
     X[keep_cols] = df[keep_cols]
 
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size= 0.3, random_state=42)
-    
+        X, y, test_size=0.3, random_state=42)
+
     return X_train, X_test, y_train, y_test
 
-def train_models(X_train, X_test, y_train, y_test, models_path, results_path):
+
+def train_models(X_train, X_test, y_train, y_test, MODELS_PATH, RESULTS_PATH):
     '''
     train, store model results: images + scores, and store models
     input:
@@ -160,34 +178,44 @@ def train_models(X_train, X_test, y_train, y_test, models_path, results_path):
     param_grid = {
         'n_estimators': [200, 500],
         'max_features': ['auto', 'sqrt'],
-        'max_depth' : [4,5,100],
-        'criterion' :['gini', 'entropy']
-        }
+        'max_depth': [4, 5, 100],
+        'criterion': ['gini', 'entropy']
+    }
     cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
     cv_rfc.fit(X_train, y_train)
+
+    # Train and test set churn predictions
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
 
     # Logistic regression
     lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
     lrc.fit(X_train, y_train)
+
+    # Train and test set churn predictions
     y_train_preds_lr = lrc.predict(X_train)
     y_test_preds_lr = lrc.predict(X_test)
 
     # Save models
-    joblib.dump(cv_rfc.best_estimator_, f'./{models_path}rfc_model.pkl')
-    joblib.dump(lrc, f'./{models_path}logistic_model.pkl')
+    joblib.dump(cv_rfc.best_estimator_, f'./{MODELS_PATH}rfc_model.pkl')
+    joblib.dump(lrc, f'./{MODELS_PATH}logistic_model.pkl')
 
     # ROC Curve for models
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
-    rfc_disp = plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8)
+    rfc_disp = plot_roc_curve(
+        cv_rfc.best_estimator_,
+        X_test,
+        y_test,
+        ax=ax,
+        alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
-    plt.savefig(f'{results_path}roc_curve.png')
+    plt.savefig(f'{RESULTS_PATH}roc_curve.png')
 
     return cv_rfc, lrc, y_train_preds_rf, y_test_preds_rf, \
         y_train_preds_lr, y_test_preds_lr
+
 
 def classification_report_image(y_train,
                                 y_test,
@@ -215,31 +243,39 @@ def classification_report_image(y_train,
 
     # Plot rfc classification report
     # plt.rc('figure', figsize=(5, 5))
-    plt.figure(figsize=(12,8))
-    plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.figure(figsize=(12, 8))
+    plt.text(0.01, 1.25, str('Random Forest Train'), {
+             'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
+    plt.text(0.01, 0.6, str('Random Forest Test'), {
+             'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
     plt.axis('off')
 
     # Save rfc_classification_plot
-    plt.savefig(f'{results_path}rfc_classification_report.png')
+    plt.savefig(f'{RESULTS_PATH}rfc_classification_report.png')
 
     # LRC test and train classification report
     lr_test_report = classification_report(y_test, y_test_preds_lr)
     lr_train_report = classification_report(y_train, y_train_preds_lr)
-    plt.figure(figsize=(12,8))
-    plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+    plt.figure(figsize=(12, 8))
+    plt.text(0.01, 1.25, str('Logistic Regression Train'),
+             {'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
+    plt.text(0.01, 0.6, str('Logistic Regression Test'), {
+             'fontsize': 10}, fontproperties='monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {
+             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
     plt.axis('off')
 
     # Save lrc_classification_plot
-    plt.savefig(f'{results_path}lrc_classification_report.png')
+    plt.savefig(f'{RESULTS_PATH}lrc_classification_report.png')
 
 
-def feature_importance_plot(model, X_data, output_pth):
+def feature_importance_plot(model, X_data, RESULTS_PATH):
     '''
     creates and stores the feature importances in pth
     input:
@@ -251,13 +287,13 @@ def feature_importance_plot(model, X_data, output_pth):
              None
     '''
     # Feature contribution by churn class
-    plt.figure(figsize=(20,15))
+    plt.figure(figsize=(20, 15))
     explainer = shap.TreeExplainer(model.best_estimator_)
     shap_values = explainer.shap_values(X_data)
     shap.summary_plot(shap_values, X_data, plot_type="bar", show=False)
 
     # Save rfc_shap_summary_plot
-    plt.savefig(f'{results_path}rfc_shap_summary_plot.png')
+    plt.savefig(f'{RESULTS_PATH}rfc_shap_summary_plot.png')
 
     # Calculate feature importances
     importances = model.best_estimator_.feature_importances_
@@ -268,7 +304,7 @@ def feature_importance_plot(model, X_data, output_pth):
     names = [X_data.columns[i] for i in indices]
 
     # Create plot
-    plt.figure(figsize=(20,15))
+    plt.figure(figsize=(20, 15))
 
     # Create plot title
     plt.title("Feature Importance")
@@ -281,32 +317,34 @@ def feature_importance_plot(model, X_data, output_pth):
     plt.xticks(range(X_data.shape[1]), names, rotation=90)
 
     # Save rfc_feature_importance plot
-    plt.savefig(f'{results_path}rfc_feature_importance.png')
+    plt.savefig(f'{RESULTS_PATH}rfc_feature_importance.png')
+
 
 if __name__ == "__main__":
-    path_df = "data/bank_data.csv"
-    image_path = "images/eda/"
-    results_path = "images/results/"
-    logs_path = "logs/"
-    models_path = "models/"
+    PATH_DF = "data/bank_data.csv"
+    IMAGE_PATH = "images/eda/"
+    RESULTS_PATH = "images/results/"
+    LOGS_PATH = "logs/"
+    MODELS_PATH = "models/"
     category_lst = [
+        'Attrition_Flag'
         'Gender',
         'Education_Level',
         'Marital_Status',
         'Income_Category',
-        'Card_Category'                
+        'Card_Category'
     ]
-    df = import_data(path_df)
-    perform_eda(df, image_path)
+    df = import_data(PATH_DF)
+    perform_eda(df, IMAGE_PATH)
     df = encoder_helper(df, category_lst, response="_Churn")
     X_train, X_test, y_train, y_test = perform_feature_engineering(df)
     cv_rfc, lrc, y_train_preds_rf, y_test_preds_rf, \
         y_train_preds_lr, y_test_preds_lr = train_models(X_train, X_test,
-         y_train, y_test, models_path, results_path)
+                                                         y_train, y_test, MODELS_PATH, RESULTS_PATH)
     classification_report_image(y_train,
                                 y_test,
                                 y_train_preds_lr,
                                 y_train_preds_rf,
                                 y_test_preds_lr,
                                 y_test_preds_rf)
-    feature_importance_plot(cv_rfc, X_test, results_path)
+    feature_importance_plot(cv_rfc, X_test, RESULTS_PATH)
