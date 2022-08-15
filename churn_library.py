@@ -44,12 +44,12 @@ category_lst = [
 ]
 
 
-def import_data(pth):
+def import_data(PATH_DF):
     '''
     returns DataFrame for the csv found at pth
 
     input:
-            pth: a path to the csv
+            PATH_DF: a path to the csv
     output:
             df: pandas DataFrame
     '''
@@ -64,6 +64,7 @@ def perform_eda(df, IMAGE_PATH):
     perform eda on df and save figures to images folder
     input:
             df: pandas dataframe
+            IMAGE_PATH: path for storing images
 
     output:
             None
@@ -126,8 +127,8 @@ def perform_feature_engineering(df, response=None):
     '''
 
     # Create features DataFrame
-    X = pd.DataFrame()
-    y = df['Churn']
+    features = pd.DataFrame()
+    targets = df['Churn']
     keep_cols = [
         'Customer_Age',
         'Dependent_count',
@@ -148,11 +149,11 @@ def perform_feature_engineering(df, response=None):
         'Marital_Status_Churn',
         'Income_Category_Churn',
         'Card_Category_Churn']
-    X[keep_cols] = df[keep_cols]
+    features[keep_cols] = df[keep_cols]
 
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42)
+        features, targets, test_size=0.3, random_state=42)
 
     return X_train, X_test, y_train, y_test
 
@@ -165,6 +166,8 @@ def train_models(X_train, X_test, y_train, y_test, MODELS_PATH, RESULTS_PATH):
               X_test: X testing data
               y_train: y training data
               y_test: y testing data
+              MODELS_PATH: path to save models as pickle files
+              RESULTS_PATH: path to save ROC curve
     output:
               cv_rfc: Cross-validated tuned Random Forest Classifier (RFC)
               lrc: Logistic Regression Classifier (LRC)
@@ -235,7 +238,10 @@ def classification_report_image(y_train,
             y_test_preds_rf: test predictions from random forest
 
     output:
-             None
+             lr_test_report: logistic regression test predictions classificaiton report
+             lr_train_report: logistic regression train predictions classificaiton report
+             rfc_test_report: random forest test predictions classificaiton report
+             rfc_train_report: random forest train predictions classificaiton report
     '''
     # Random forest test and train classification reports
     rf_test_report = classification_report(y_test, y_test_preds_rf)
@@ -273,6 +279,9 @@ def classification_report_image(y_train,
 
     # Save lrc_classification_plot
     plt.savefig(f'{RESULTS_PATH}lrc_classification_report.png')
+
+    return rf_test_report, rf_train_report, \
+        lr_test_report, lr_train_report
 
 
 def feature_importance_plot(model, X_data, RESULTS_PATH):
@@ -319,7 +328,6 @@ def feature_importance_plot(model, X_data, RESULTS_PATH):
     # Save rfc_feature_importance plot
     plt.savefig(f'{RESULTS_PATH}rfc_feature_importance.png')
 
-
 if __name__ == "__main__":
     PATH_DF = "data/bank_data.csv"
     IMAGE_PATH = "images/eda/"
@@ -327,24 +335,29 @@ if __name__ == "__main__":
     LOGS_PATH = "logs/"
     MODELS_PATH = "models/"
     category_lst = [
-        'Attrition_Flag'
+        'Attrition_Flag',
         'Gender',
         'Education_Level',
         'Marital_Status',
         'Income_Category',
         'Card_Category'
     ]
-    df = import_data(PATH_DF)
-    perform_eda(df, IMAGE_PATH)
-    df = encoder_helper(df, category_lst, response="_Churn")
-    X_train, X_test, y_train, y_test = perform_feature_engineering(df)
-    cv_rfc, lrc, y_train_preds_rf, y_test_preds_rf, \
-        y_train_preds_lr, y_test_preds_lr = train_models(X_train, X_test,
-                                                         y_train, y_test, MODELS_PATH, RESULTS_PATH)
-    classification_report_image(y_train,
-                                y_test,
-                                y_train_preds_lr,
-                                y_train_preds_rf,
-                                y_test_preds_lr,
-                                y_test_preds_rf)
-    feature_importance_plot(cv_rfc, X_test, RESULTS_PATH)
+    data_df = import_data(PATH_DF)
+    perform_eda(data_df, IMAGE_PATH)
+    data_df = encoder_helper(data_df, category_lst, response="_Churn")
+    train_features, test_features, train_labels, test_labels = perform_feature_engineering(
+        data_df)
+    random_forest_cv, log_reg, rf_pred_train_labels, rf_pred_test_labels, \
+        log_reg_pred_train_labels, log_reg_pred_test_labels = train_models(train_features,
+                                                         test_features,
+                                                         train_labels,
+                                                         test_labels,
+                                                         MODELS_PATH,
+                                                         RESULTS_PATH)
+    classification_report_image(train_labels,
+                                test_labels,
+                                log_reg_pred_train_labels,
+                                rf_pred_train_labels,
+                                log_reg_pred_test_labels,
+                                rf_pred_test_labels)
+    feature_importance_plot(random_forest_cv, test_features, RESULTS_PATH)
