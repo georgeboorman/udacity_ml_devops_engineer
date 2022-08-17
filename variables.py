@@ -1,7 +1,5 @@
-# Import functions
+# Import pandas
 import pandas as pd
-# from .churn_library import RESULTS_PATH
-# import numpy as np
 
 # Variables used in churn_library or to test functions
 PATH_DF = "data/bank_data.csv"
