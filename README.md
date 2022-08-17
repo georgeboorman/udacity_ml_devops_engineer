@@ -40,6 +40,8 @@ The `logs` directory contains:
 ## Running Files
 Clone the repo by entering `git clone https://github.com/georgeboorman/udacity_ml_devops_engineer` in your terminal.
 
+Install the packages by running `python3 pip install -r requirements_py3.6txt` if using Python 3.6, or `python3 pip install -r requirements_py3.8txt` if using Python 3.8 or above.
+
 To execute `churn_library.py` run `python3 churn_library.py`.
 
     - This will save files in the models, images/eda, and images/results directories.
