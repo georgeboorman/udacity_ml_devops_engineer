@@ -1,15 +1,16 @@
 # Import functions
 import pandas as pd
-import numpy as np
+# from .churn_library import RESULTS_PATH
+# import numpy as np
 
 # Variables used in churn_library or to test functions
-path_df = "data/bank_data.csv"
-image_path = "images/eda/"
-results_path = "images/results/"
-logs_path = "logs/"
-models_path = "models/"
-expected_outputs_path = "expected_outputs/"
-category_lst = [
+PATH_DF = "data/bank_data.csv"
+IMAGE_PATH = "images/eda/"
+RESULTS_PATH = "images/results/"
+LOGS_PATH = "logs/"
+MODELS_PATH = "models/"
+EXPECTED_OUTPUTS_PATH = "expected_outputs/"
+CATEGORY_LST = [
     'Attrition_Flag',
     'Gender',
     'Education_Level',
@@ -19,10 +20,10 @@ category_lst = [
 ]
 
 # Expected values from encoder_helper()
-encoded_values = pd.read_csv(f'{expected_outputs_path}encoded_values.csv')
+encoded_values = pd.read_csv(f'{EXPECTED_OUTPUTS_PATH}encoded_values.csv')
 
 # Expected values from perform_feature_engineering()
-X_train_expected = pd.read_csv(f'{expected_outputs_path}X_train.csv')
-X_test_expected = pd.read_csv(f'{expected_outputs_path}X_test.csv')
-y_train_expected = pd.read_csv(f'{expected_outputs_path}y_train.csv')
-y_test_expected = pd.read_csv(f'{expected_outputs_path}y_test.csv')
+X_train_expected = pd.read_csv(f'{EXPECTED_OUTPUTS_PATH}X_train.csv')
+X_test_expected = pd.read_csv(f'{EXPECTED_OUTPUTS_PATH}X_test.csv')
+y_train_expected = pd.read_csv(f'{EXPECTED_OUTPUTS_PATH}y_train.csv')
+y_test_expected = pd.read_csv(f'{EXPECTED_OUTPUTS_PATH}y_test.csv')
