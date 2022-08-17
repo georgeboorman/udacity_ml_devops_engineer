@@ -1,15 +1,13 @@
 # Predict Customer Churn
 
-- Project **Predict Customer Churn** of ML DevOps Engineer Nanodegree Udacity
+- Udacity ML DevOps Engineer Nanodegree project to convert a notebook into a Python module for **predicting customer churn**. 
 
 ## Project Description
-This project takes `churn_notebook.ipynb` and converts it into a series of functions to execute an end-to-end machine learning pipeline.
+This project takes [`churn_notebook.ipynb`](https://github.com/georgeboorman/udacity_ml_devops_engineer/blob/main/churn_notebook.ipynb) and converts it into a series of functions to execute an end-to-end machine learning pipeline.
 
-The aim of the project is to create functions and implement a testing framework, while adhering to PEP8 guidelines and 
+The aim of the project is to create functions and implement a testing framework, while adhering to PEP8 guidelines and producing production-ready code through the use of logging and testing. 
 
-
-
-A test file for all functions in `churn_libary.py` has been created called `churn_script_logging_and_tests.py`
+A test file for all functions in [`churn_libary.py`](https://github.com/georgeboorman/udacity_ml_devops_engineer/blob/main/churn_library.py) has been created called [`churn_script_logging_and_tests.py`](https://github.com/georgeboorman/udacity_ml_devops_engineer/blob/main/churn_script_logging_and_tests.py). Additionally, a file called [`variables.py`](https://github.com/georgeboorman/udacity_ml_devops_engineer/blob/main/variables.py) has been created to store variables used in the functions and tests.
 
 ## Files and data description
 Overview of the files and data present in the root directory. 
