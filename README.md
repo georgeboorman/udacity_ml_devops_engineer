@@ -44,11 +44,11 @@ Install the packages by running `python3 pip install -r requirements_py3.6txt` i
 
 To execute `churn_library.py` run `python3 churn_library.py`.
 
-    - This will save files in the models, images/eda, and images/results directories.
+* This will save files in the models, images/eda, and images/results directories.
 
 To execute `churn_script_logging_and_tests.py` run `python3 churn_script_logging_and_tests.py`.
-    
-    - This will update `churn_library.log`.
+      
+* This will update `churn_library.log`.
 
 To load the models locally run the following code in the terminal or a Python file:
 ```
