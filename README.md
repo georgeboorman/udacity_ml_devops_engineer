@@ -1,6 +1,6 @@
 # Predict Customer Churn
 
-- Udacity ML DevOps Engineer Nanodegree project to convert a notebook into a Python module for **predicting customer churn**. 
+- [Udacity ML DevOps Engineer Nanodegree](https://www.udacity.com/course/machine-learning-dev-ops-engineer-nanodegree--nd0821) project to convert a notebook into a Python module for **predicting customer churn**. 
 
 ## Project Description
 This project takes [`churn_notebook.ipynb`](https://github.com/georgeboorman/udacity_ml_devops_engineer/blob/main/churn_notebook.ipynb) and converts it into a series of functions to execute an end-to-end machine learning pipeline.
