@@ -83,10 +83,12 @@ def perform_eda(df, IMAGE_PATH):
     plt.savefig(f'{IMAGE_PATH}marital_status_bar_plot.png')
 
     # Total Trans Ct histogram and kde plot
+    plt.figure(figsize=(20,10))
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
     plt.savefig(f'{IMAGE_PATH}/Total_Trans_Ct_kde_plot.png')
 
     # Correlation heatmap
+    plt.figure(figsize=(20,10))
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.savefig(f'{IMAGE_PATH}correlation_heatmap.png')
 
